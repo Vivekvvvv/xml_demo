@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <library>
   <book id="B001">
     <title>XML快速上手</title>
@@ -17,7 +18,7 @@
   </book>
   <book id="B003">
     <title>前端架构设计</title>
-    <author>赵楠</author>
+    <author>赵栋</author>
     <category>前端</category>
     <price>79</price>
     <publishYear>2020</publishYear>
@@ -47,12 +48,196 @@
     <publishYear>2023</publishYear>
     <stock>9</stock>
   </book>
-  <book id="BK-0001">
-    <title>JAVA从入门到入土</title>
-    <author>余麻子</author>
-    <category>计算机编程</category>
-    <price>10</price>
-    <publishYear>2024</publishYear>
+  <book id="B007">
+    <title>Python编程实践</title>
+    <author>李扬</author>
+    <category>后端</category>
+    <price>58</price>
+    <publishYear>2021</publishYear>
+    <stock>7</stock>
+  </book>
+  <book id="B008">
+    <title>Go微服务实录</title>
+    <author>陈博</author>
+    <category>后端</category>
+    <price>69</price>
+    <publishYear>2022</publishYear>
+    <stock>6</stock>
+  </book>
+  <book id="B009">
+    <title>React组件设计</title>
+    <author>赵静</author>
+    <category>前端</category>
+    <price>72</price>
+    <publishYear>2020</publishYear>
+    <stock>5</stock>
+  </book>
+  <book id="B010">
+    <title>TypeScript进阶</title>
+    <author>苏晨</author>
+    <category>前端</category>
+    <price>66</price>
+    <publishYear>2021</publishYear>
+    <stock>8</stock>
+  </book>
+  <book id="B011">
+    <title>Rust系统编程</title>
+    <author>黄建</author>
+    <category>编程语言</category>
+    <price>88</price>
+    <publishYear>2023</publishYear>
+    <stock>4</stock>
+  </book>
+  <book id="B012">
+    <title>云原生入门</title>
+    <author>周明</author>
+    <category>云计算</category>
+    <price>60</price>
+    <publishYear>2022</publishYear>
     <stock>10</stock>
+  </book>
+  <book id="B013">
+    <title>Docker实践手册</title>
+    <author>王浩</author>
+    <category>运维</category>
+    <price>55</price>
+    <publishYear>2019</publishYear>
+    <stock>12</stock>
+  </book>
+  <book id="B014">
+    <title>数据科学导论</title>
+    <author>刘晓</author>
+    <category>数据科学</category>
+    <price>75</price>
+    <publishYear>2020</publishYear>
+    <stock>6</stock>
+  </book>
+  <book id="B015">
+    <title>机器学习项目实战</title>
+    <author>吴桐</author>
+    <category>人工智能</category>
+    <price>98</price>
+    <publishYear>2021</publishYear>
+    <stock>5</stock>
+  </book>
+  <book id="B016">
+    <title>深度学习简明教程</title>
+    <author>孙悦</author>
+    <category>人工智能</category>
+    <price>120</price>
+    <publishYear>2022</publishYear>
+    <stock>4</stock>
+  </book>
+  <book id="B017">
+    <title>产品经理手记</title>
+    <author>赵芸</author>
+    <category>管理</category>
+    <price>45</price>
+    <publishYear>2018</publishYear>
+    <stock>11</stock>
+  </book>
+  <book id="B018">
+    <title>精益创业实践</title>
+    <author>Eric Ries</author>
+    <category>管理</category>
+    <price>52</price>
+    <publishYear>2017</publishYear>
+    <stock>13</stock>
+  </book>
+  <book id="B019">
+    <title>SQL性能优化</title>
+    <author>杨俊</author>
+    <category>数据库</category>
+    <price>63</price>
+    <publishYear>2019</publishYear>
+    <stock>7</stock>
+  </book>
+  <book id="B020">
+    <title>NoSQL权威指南</title>
+    <author>李楠</author>
+    <category>数据库</category>
+    <price>70</price>
+    <publishYear>2020</publishYear>
+    <stock>6</stock>
+  </book>
+  <book id="B021">
+    <title>测试驱动开发实践</title>
+    <author>周慧</author>
+    <category>测试</category>
+    <price>58</price>
+    <publishYear>2018</publishYear>
+    <stock>8</stock>
+  </book>
+  <book id="B022">
+    <title>持续集成与部署</title>
+    <author>唐磊</author>
+    <category>运维</category>
+    <price>62</price>
+    <publishYear>2021</publishYear>
+    <stock>9</stock>
+  </book>
+  <book id="B023">
+    <title>网络安全蓝图</title>
+    <author>贺峰</author>
+    <category>安全</category>
+    <price>80</price>
+    <publishYear>2022</publishYear>
+    <stock>5</stock>
+  </book>
+  <book id="B024">
+    <title>区块链技术解析</title>
+    <author>邹宇</author>
+    <category>区块链</category>
+    <price>88</price>
+    <publishYear>2020</publishYear>
+    <stock>6</stock>
+  </book>
+  <book id="B025">
+    <title>大数据实时处理</title>
+    <author>秦朗</author>
+    <category>数据科学</category>
+    <price>92</price>
+    <publishYear>2021</publishYear>
+    <stock>7</stock>
+  </book>
+  <book id="B026">
+    <title>算法竞赛秘籍</title>
+    <author>张衡</author>
+    <category>算法</category>
+    <price>85</price>
+    <publishYear>2019</publishYear>
+    <stock>6</stock>
+  </book>
+  <book id="B027">
+    <title>Java性能调优</title>
+    <author>程远</author>
+    <category>后端</category>
+    <price>76</price>
+    <publishYear>2020</publishYear>
+    <stock>5</stock>
+  </book>
+  <book id="B028">
+    <title>SwiftUI开发指南</title>
+    <author>林晨</author>
+    <category>移动</category>
+    <price>68</price>
+    <publishYear>2022</publishYear>
+    <stock>6</stock>
+  </book>
+  <book id="B029">
+    <title>Kotlin编程艺术</title>
+    <author>沈琪</author>
+    <category>移动</category>
+    <price>64</price>
+    <publishYear>2021</publishYear>
+    <stock>7</stock>
+  </book>
+  <book id="B030">
+    <title>XR交互设计</title>
+    <author>方宁</author>
+    <category>设计</category>
+    <price>73</price>
+    <publishYear>2023</publishYear>
+    <stock>4</stock>
   </book>
 </library>

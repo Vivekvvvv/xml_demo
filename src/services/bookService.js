@@ -166,49 +166,6 @@ async function getRawXml() {
   return readXmlRaw();
 }
 
-function pickFieldValue(book, field) {
-  if (!field) return '';
-  if (field.startsWith('@')) {
-    const actual = field.slice(1);
-    return book[actual];
-  }
-  return book[field];
-}
-
-function matchesExact(book, field, value) {
-  const source = String(pickFieldValue(book, field) ?? '').toLowerCase();
-  return source === value.toLowerCase();
-}
-
-function matchesContains(book, field, value) {
-  const source = String(pickFieldValue(book, field) ?? '').toLowerCase();
-  return source.includes(value.toLowerCase());
-}
-
-async function queryByXPath(expr) {
-  const books = await loadUniqueBooks();
-  const expression = typeof expr === 'string' ? expr.trim() : '';
-  if (!expression) {
-    return buildXmlFromBooks(books);
-  }
-
-  const exact = /\/\/book\[(\@?\w+)\s*=\s*(["'])([^"']+)\2\]/i.exec(expression);
-  const contains = /\/\/book\[contains\((\@?\w+),\s*(["'])([^"']+)\2\)\]/i.exec(expression);
-
-  let filtered = books;
-  if (exact) {
-    const field = exact[1];
-    const value = exact[3];
-    filtered = books.filter((b) => matchesExact(b, field, value));
-  } else if (contains) {
-    const field = contains[1];
-    const value = contains[3];
-    filtered = books.filter((b) => matchesContains(b, field, value));
-  }
-
-  return buildXmlFromBooks(filtered);
-}
-
 module.exports = {
   listBooks,
   paginateBooks,
@@ -217,5 +174,4 @@ module.exports = {
   deleteBook,
   getBook,
   getRawXml,
-  queryByXPath,
 };

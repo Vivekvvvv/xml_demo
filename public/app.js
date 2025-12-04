@@ -1,9 +1,13 @@
 const qs = (id) => document.getElementById(id);
 const AUTH_TOKEN_KEY = 'authToken';
 const DISPLAY_NAME_KEY = 'displayName';
+const USER_ROLE_KEY = 'userRole';
 let currentPage = 1;
 let totalPages = 1;
 let formMode = null;
+let isAdminUser = false;
+let currentUsername = '';
+let adminPanelVisible = false;
 
 const FORM_FIELDS = {
   id: 'form-id',
@@ -14,6 +18,16 @@ const FORM_FIELDS = {
   publishYear: 'form-year',
   stock: 'form-stock',
 };
+
+const TABLE_COLUMNS = [
+  { key: 'id', label: '书号' },
+  { key: 'title', label: '书名' },
+  { key: 'author', label: '作者' },
+  { key: 'category', label: '分类' },
+  { key: 'price', label: '价格' },
+  { key: 'publishYear', label: '年份' },
+  { key: 'stock', label: '库存' },
+];
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -76,12 +90,6 @@ function setFormMode(mode, book = null) {
   saveBtn.disabled = !enableSave;
   if (titleEl) titleEl.textContent = titleText;
   if (hintEl) hintEl.textContent = hintText;
-  if (mode) {
-    const card = qs('crud-card');
-    if (card) {
-      card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }
 }
 
 function getToken() {
@@ -91,6 +99,7 @@ function getToken() {
 function clearSession() {
   localStorage.removeItem(AUTH_TOKEN_KEY);
   localStorage.removeItem(DISPLAY_NAME_KEY);
+  localStorage.removeItem(USER_ROLE_KEY);
 }
 
 async function apiFetch(url, options = {}) {
@@ -115,40 +124,25 @@ function updatePagerButtons() {
   if (next) next.disabled = currentPage >= totalPages;
 }
 
-function getSortType(field) {
-  return ['price', 'publishYear', 'stock'].includes(field) ? 'number' : 'text';
-}
-
-async function renderXmlToTable(xmlText, containerId, sortField, order) {
-  const [xslText] = await Promise.all([fetch('books.xsl').then((r) => r.text())]);
-  const parser = new DOMParser();
-  const xml = parser.parseFromString(xmlText, 'text/xml');
-  const xsl = parser.parseFromString(xslText, 'text/xml');
-  const processor = new XSLTProcessor();
-  processor.importStylesheet(xsl);
-  if (sortField) {
-    processor.setParameter(null, 'sortField', sortField);
-    processor.setParameter(null, 'order', order || 'asc');
-    processor.setParameter(null, 'sortType', getSortType(sortField));
-  }
-  const fragment = processor.transformToFragment(xml, document);
-  const container = qs(containerId);
-  container.innerHTML = '';
-  container.appendChild(fragment);
-}
-
-async function loadXsltTable() {
-  const sortField = qs('xslt-sort-field').value;
-  const sortOrder = qs('xslt-sort-order').value;
-  const xmlText = await apiFetch('/api/books/raw').then((r) => r.text());
-  await renderXmlToTable(xmlText, 'xslt-table', sortField, sortOrder);
-}
-
 async function loadPaged(page = 1) {
   const pageSize = Number(qs('page-size').value) || 5;
   const sortBy = qs('page-sort-field').value;
   const order = qs('page-sort-order').value;
-  const resp = await apiFetch(`/api/books?page=${page}&pageSize=${pageSize}&sortBy=${sortBy}&order=${order}`);
+  const keyword = (qs('search-keyword')?.value || '').trim();
+  const field = qs('search-field')?.value || 'title';
+  const mode = qs('search-mode')?.value || 'contains';
+  const params = new URLSearchParams({
+    page: page.toString(),
+    pageSize: pageSize.toString(),
+    sortBy,
+    order,
+  });
+  if (keyword) {
+    params.set('keyword', keyword);
+    params.set('field', field);
+    params.set('mode', mode);
+  }
+  const resp = await apiFetch(`/api/books?${params.toString()}`);
   const data = await resp.json();
   const requestedPage = Number(page) || 1;
   const computedTotalPages = Math.max(1, Math.ceil(data.total / data.pageSize));
@@ -234,7 +228,7 @@ async function handleAdd() {
     });
     if (!resp.ok) throw new Error(await resp.text());
     setStatus('添加成功', true);
-    await Promise.all([loadXsltTable(), loadPaged(currentPage)]);
+    await loadPaged(currentPage);
     if (formMode === 'create') {
       clearFormFields();
       focusFirstField();
@@ -255,7 +249,7 @@ async function handleUpdate() {
     });
     if (!resp.ok) throw new Error(await resp.text());
     setStatus('更新成功', true);
-    await Promise.all([loadXsltTable(), loadPaged(currentPage)]);
+    await loadPaged(currentPage);
   } catch (err) {
     setStatus(err.message);
   }
@@ -271,9 +265,126 @@ async function handleDelete(idOverride) {
     const resp = await apiFetch(`/api/books/${encodeURIComponent(id)}`, { method: 'DELETE' });
     if (!resp.ok) throw new Error(await resp.text());
     setStatus('删除成功', true);
-    await Promise.all([loadXsltTable(), loadPaged(currentPage)]);
+    await loadPaged(currentPage);
   } catch (err) {
     setStatus(err.message);
+  }
+}
+
+function setAdminStatus(text, ok = false) {
+  const node = qs('user-panel-status');
+  if (!node) return;
+  node.textContent = text || '';
+  node.className = `status ${text ? (ok ? 'ok' : 'err') : ''}`;
+}
+
+function renderUserTable(users = []) {
+  const container = qs('user-table');
+  if (!container) return;
+  if (!users.length) {
+    container.innerHTML = '<table class="table"><tbody><tr><td class="empty-row">暂无用户</td></tr></tbody></table>';
+    return;
+  }
+  const rows = users
+    .map((user) => {
+      const isSelf = user.username === currentUsername;
+      const toggleText = user.role === 'admin' ? '降为普通' : '设为管理员';
+      const disableDelete = isSelf ? 'disabled' : '';
+      return `<tr data-username="${escapeHtml(user.username)}" data-role="${escapeHtml(user.role)}">
+        <td>${escapeHtml(user.username)}</td>
+        <td>${escapeHtml(user.displayName || user.username)}</td>
+        <td>${user.role === 'admin' ? '管理员' : '普通用户'}</td>
+        <td class="row-actions">
+          <button type="button" class="ghost" data-user-action="reset">重置密码</button>
+          <button type="button" class="ghost" data-user-action="toggle">${toggleText}</button>
+          <button type="button" class="ghost danger" data-user-action="delete" ${disableDelete}>删除</button>
+        </td>
+      </tr>`;
+    })
+    .join('');
+  container.innerHTML = `<table class="table"><thead><tr><th>账号</th><th>昵称</th><th>角色</th><th>操作</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+async function loadUserTable() {
+  if (!isAdminUser) return;
+  setAdminStatus('正在加载...');
+  try {
+    const resp = await apiFetch('/api/users');
+    if (!resp.ok) throw new Error(await resp.text());
+    const data = await resp.json();
+    renderUserTable(data.users || []);
+    setAdminStatus(`共 ${data.users?.length || 0} 个账号`, true);
+  } catch (err) {
+    setAdminStatus(err.message || '加载失败');
+  }
+}
+
+async function adminPatchUser(username, payload, successMessage) {
+  try {
+    const resp = await apiFetch(`/api/users/${encodeURIComponent(username)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!resp.ok) throw new Error(await resp.text());
+    setAdminStatus(successMessage, true);
+    await loadUserTable();
+  } catch (err) {
+    setAdminStatus(err.message || '操作失败');
+  }
+}
+
+async function adminDeleteUser(username) {
+  try {
+    const resp = await apiFetch(`/api/users/${encodeURIComponent(username)}`, { method: 'DELETE' });
+    if (!resp.ok) throw new Error(await resp.text());
+    setAdminStatus('删除成功', true);
+    await loadUserTable();
+  } catch (err) {
+    setAdminStatus(err.message || '删除失败');
+  }
+}
+
+function handleUserTableClick(event) {
+  const button = event.target.closest('[data-user-action]');
+  if (!button) return;
+  const row = button.closest('tr');
+  if (!row) return;
+  const username = row.dataset.username;
+  const action = button.dataset.userAction;
+  if (!username) return;
+  if (action === 'delete' && username === currentUsername) {
+    setAdminStatus('不能删除当前登录账号');
+    return;
+  }
+  if (action === 'reset') {
+    const newPass = window.prompt(`请输入 ${username} 的新密码`);
+    if (!newPass) return;
+    adminPatchUser(username, { password: newPass }, '密码已重置');
+  } else if (action === 'toggle') {
+    const newRole = row.dataset.role === 'admin' ? 'user' : 'admin';
+    adminPatchUser(username, { role: newRole }, '角色已更新');
+  } else if (action === 'delete') {
+    if (!window.confirm(`确认删除账号 ${username} 吗？`)) return;
+    adminDeleteUser(username);
+  }
+}
+
+function toggleAdminPanel(visible) {
+  const panel = qs('admin-panel');
+  if (!panel) return;
+  adminPanelVisible = !!visible && isAdminUser;
+  panel.hidden = !adminPanelVisible;
+  if (adminPanelVisible) {
+    loadUserTable();
+    const button = qs('btn-manage-users');
+    if (button) button.textContent = '收起管理';
+  } else {
+    const container = qs('user-table');
+    if (container) container.innerHTML = '';
+    setAdminStatus('');
+    const button = qs('btn-manage-users');
+    if (button) button.textContent = '管理账号';
   }
 }
 
@@ -287,7 +398,7 @@ function handlePagedTableClick(event) {
     const book = getBookFromRow(row);
     if (book) {
       setStatus('');
-      setFormMode('update', book);
+      openBookModal('update', book);
     }
   } else if (action === 'delete') {
     const id = row.dataset.id;
@@ -301,6 +412,23 @@ function handlePagedTableClick(event) {
   }
 }
 
+function openBookModal(mode, book = null) {
+  const modal = qs('book-modal');
+  if (!modal) return;
+  modal.classList.add('active');
+  document.body.classList.add('modal-open');
+  setFormMode(mode, book);
+}
+
+function closeBookModal() {
+  const modal = qs('book-modal');
+  if (!modal) return;
+  modal.classList.remove('active');
+  document.body.classList.remove('modal-open');
+  setFormMode(null);
+  setStatus('');
+}
+
 async function handleFormSave() {
   if (formMode === 'create') {
     await handleAdd();
@@ -312,21 +440,7 @@ async function handleFormSave() {
 }
 
 function handleCancelForm() {
-  setStatus('');
-  setFormMode(null);
-}
-
-async function handleXPath() {
-  try {
-    const expr = qs('xpath-input').value.trim();
-    const resp = await apiFetch(`/api/books/xpath?expr=${encodeURIComponent(expr)}`);
-    if (!resp.ok) throw new Error(await resp.text());
-    const xml = await resp.text();
-    await renderXmlToTable(xml, 'xpath-result', 'title', 'asc');
-  } catch (err) {
-    const container = qs('xpath-result');
-    if (container) container.textContent = `XPath 查询失败：${err.message}`;
-  }
+  closeBookModal();
 }
 
 async function ensureSession() {
@@ -337,10 +451,22 @@ async function ensureSession() {
   }
   const res = await apiFetch('/api/me');
   const data = await res.json();
-  const name = data?.user?.displayName || data?.user?.username || '已登录';
+  const user = data?.user || {};
+  currentUsername = user.username || '';
+  isAdminUser = user.role === 'admin' || user.username === 'admin';
+  if (user.role) {
+    localStorage.setItem(USER_ROLE_KEY, user.role);
+  }
+  const name = user.displayName || user.username || '已登录';
   localStorage.setItem(DISPLAY_NAME_KEY, name);
   const userEl = qs('user-name');
   if (userEl) userEl.textContent = name;
+  toggleAdminPanel(adminPanelVisible && isAdminUser);
+  const manageBtn = qs('btn-manage-users');
+  if (manageBtn) {
+    manageBtn.hidden = !isAdminUser;
+    manageBtn.textContent = adminPanelVisible && isAdminUser ? '收起管理' : '管理账号';
+  }
 }
 
 async function handleLogout() {
@@ -355,7 +481,6 @@ async function handleLogout() {
 }
 
 function bindEvents() {
-  qs('btn-xslt-refresh').addEventListener('click', loadXsltTable);
   qs('btn-prev').addEventListener('click', () => {
     if (currentPage <= 1) return;
     loadPaged(currentPage - 1);
@@ -368,7 +493,7 @@ function bindEvents() {
   if (addBtn) {
     addBtn.addEventListener('click', () => {
       setStatus('');
-      setFormMode('create');
+      openBookModal('create');
     });
   }
   const saveBtn = qs('btn-save');
@@ -377,7 +502,6 @@ function bindEvents() {
   if (cancelBtn) cancelBtn.addEventListener('click', handleCancelForm);
   const tableContainer = qs('paged-table');
   if (tableContainer) tableContainer.addEventListener('click', handlePagedTableClick);
-  qs('btn-xpath').addEventListener('click', handleXPath);
   qs('page-size').addEventListener('change', () => {
     currentPage = 1;
     loadPaged(1);
@@ -388,8 +512,51 @@ function bindEvents() {
       loadPaged(1);
     });
   });
+  const searchBtn = qs('btn-search');
+  if (searchBtn) {
+    searchBtn.addEventListener('click', () => {
+      currentPage = 1;
+      loadPaged(1);
+    });
+  }
+  const resetBtn = qs('btn-reset-search');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      const keyword = qs('search-keyword');
+      if (keyword) keyword.value = '';
+      const fieldSel = qs('search-field');
+      if (fieldSel) fieldSel.value = 'title';
+      const modeSel = qs('search-mode');
+      if (modeSel) modeSel.value = 'contains';
+      currentPage = 1;
+      loadPaged(1);
+    });
+  }
+  const modalClose = qs('modal-close');
+  if (modalClose) modalClose.addEventListener('click', closeBookModal);
+  const modalBackdrop = document.querySelector('[data-close-modal]');
+  if (modalBackdrop) {
+    modalBackdrop.addEventListener('click', closeBookModal);
+  }
   const logoutBtn = qs('btn-logout');
   if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
+  const manageBtn = qs('btn-manage-users');
+  if (manageBtn) {
+    manageBtn.addEventListener('click', () => {
+      const nextVisible = !adminPanelVisible;
+      toggleAdminPanel(nextVisible);
+      if (nextVisible) {
+        const panel = qs('admin-panel');
+        if (panel) {
+          panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    });
+  }
+  const userTable = qs('user-table');
+  if (userTable) userTable.addEventListener('click', handleUserTableClick);
+  const refreshUsers = qs('btn-user-refresh');
+  if (refreshUsers) refreshUsers.addEventListener('click', loadUserTable);
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -397,9 +564,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await ensureSession();
     bindEvents();
     setFormMode(null);
-    await loadXsltTable();
     await loadPaged(1);
-    await handleXPath();
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error(err);

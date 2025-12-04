@@ -1,0 +1,20 @@
+[
+  {
+    "username": "admin",
+    "password": "admin123",
+    "displayName": "管理员",
+    "role": "admin"
+  },
+  {
+    "username": "guest",
+    "password": "guest",
+    "displayName": "游客",
+    "role": "user"
+  },
+  {
+    "username": "a",
+    "password": "12345",
+    "displayName": "hui",
+    "role": "user"
+  }
+]

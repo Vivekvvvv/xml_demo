@@ -8,16 +8,20 @@ const {
   getBook,
   listBooks,
   getRawXml,
-  queryByXPath,
 } = require('../services/bookService');
 const { dataFile } = require('../dataAccess/xmlStore');
 const { requireAuth } = require('../services/authService');
 
 const router = express.Router();
+const RESERVED_BOOK_PATHS = new Set(['raw', 'xml', 'xsd', 'search']);
+
+function isReservedBookPath(id = '') {
+  return RESERVED_BOOK_PATHS.has(String(id).toLowerCase());
+}
 
 router.use(requireAuth);
 
-router.get('/books', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const page = Number(req.query.page) || 1;
     const pageSize = Number(req.query.pageSize) || 5;
@@ -29,7 +33,7 @@ router.get('/books', async (req, res) => {
   }
 });
 
-router.get('/books/search', async (req, res) => {
+router.get('/search', async (req, res) => {
   try {
     const { field, keyword, mode } = req.query;
     const result = await listBooks({ field, keyword, mode });
@@ -39,7 +43,26 @@ router.get('/books/search', async (req, res) => {
   }
 });
 
-router.get('/books/:id', async (req, res) => {
+router.get('/raw', async (req, res) => {
+  try {
+    const xml = await getRawXml();
+    res.type('application/xml').send(xml);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+router.get('/xml', async (req, res) => {
+  res.sendFile(dataFile);
+});
+
+router.get('/xsd', async (req, res) => {
+  const xsdPath = path.join(__dirname, '../../data/books.xsd');
+  res.sendFile(xsdPath);
+});
+
+router.get('/:id', async (req, res, next) => {
+  if (isReservedBookPath(req.params.id)) return next();
   try {
     const book = await getBook(req.params.id);
     if (!book) return res.status(404).json({ message: '未找到书籍' });
@@ -49,7 +72,7 @@ router.get('/books/:id', async (req, res) => {
   }
 });
 
-router.post('/books', async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const created = await addBook(req.body);
     res.status(201).json(created);
@@ -58,7 +81,8 @@ router.post('/books', async (req, res) => {
   }
 });
 
-router.put('/books/:id', async (req, res) => {
+router.put('/:id', async (req, res, next) => {
+  if (isReservedBookPath(req.params.id)) return next();
   try {
     const updated = await updateBook(req.params.id, req.body);
     res.json(updated);
@@ -67,40 +91,14 @@ router.put('/books/:id', async (req, res) => {
   }
 });
 
-router.delete('/books/:id', async (req, res) => {
+router.delete('/:id', async (req, res, next) => {
+  if (isReservedBookPath(req.params.id)) return next();
   try {
     const removed = await deleteBook(req.params.id);
     res.json(removed);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
-});
-
-router.get('/books/raw', async (req, res) => {
-  try {
-    const xml = await getRawXml();
-    res.type('application/xml').send(xml);
-  } catch (err) {
-    res.status(500).send(err.message);
-  }
-});
-
-router.get('/books/xpath', async (req, res) => {
-  try {
-    const snippet = await queryByXPath(req.query.expr || '');
-    res.type('application/xml').send(snippet);
-  } catch (err) {
-    res.status(500).send(err.message);
-  }
-});
-
-router.get('/books-xml', async (req, res) => {
-  res.sendFile(dataFile);
-});
-
-router.get('/books-xsd', async (req, res) => {
-  const xsdPath = path.join(__dirname, '../../data/books.xsd');
-  res.sendFile(xsdPath);
 });
 
 module.exports = router;
