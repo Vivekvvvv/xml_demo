@@ -8,7 +8,7 @@
 </head>
 <body>
   <div class="container">
-    <h1>社区书店借阅（XML + XSD + XSLT + AJAX）</h1>
+    <h1>社区书店借阅 （XML + XSD + XSLT + AJAX）</h1>
 
     <div class="panel inline-controls" style="justify-content: space-between; align-items: center;">
       <div>当前登录：<strong id="user-name">--</strong></div>
@@ -24,26 +24,26 @@
         <div class="paged-list">
           <div class="paged-header">
             <div class="flex paged-controls">
-              <div class="control-field">
-                <label>每页条目</label>
-                <input id="page-size" type="number" value="5" min="1" max="20">
-              </div>
-              <div class="control-field">
-                <label>排序字段</label>
-                <select id="page-sort-field">
-                  <option value="title">title</option>
-                  <option value="price">price</option>
-                  <option value="publishYear">publishYear</option>
-                  <option value="stock">stock</option>
-                </select>
-              </div>
-              <div class="control-field">
-                <label>排序方向</label>
-                <select id="page-sort-order">
-                  <option value="asc">升序</option>
-                  <option value="desc">降序</option>
-                </select>
-              </div>
+            <div class="control-field">
+              <label>每页条目</label>
+              <input id="page-size" type="number" value="5" min="1" max="20">
+            </div>
+            <div class="control-field">
+              <label>排序字段</label>
+              <select id="page-sort-field">
+                <option value="title">title</option>
+                <option value="price">price</option>
+                <option value="publishYear">publishYear</option>
+                <option value="stock">stock</option>
+              </select>
+            </div>
+            <div class="control-field">
+              <label>排序方向</label>
+              <select id="page-sort-order">
+                <option value="asc">升序</option>
+                <option value="desc">降序</option>
+              </select>
+            </div>
             </div>
             <button type="button" class="success" id="btn-add">新增图书</button>
           </div>
@@ -93,6 +93,21 @@
       <div id="user-table" class="table"></div>
     </div>
 
+    <div class="panel">
+      <h3>XPath 查询（后端解析 expr，返回 XML 片段）</h3>
+      <div class="flex">
+        <div style="flex:1">
+          <label>XPath 表达式</label>
+          <input id="xpath-input" type="text" value='//book[contains(title,"XML")]'>
+          <p class="info">示例：<code>//book[author="王立"]</code> 精确；<code>//book[contains(category,"学")]</code> 模糊。</p>
+        </div>
+        <div style="width:160px; align-self:flex-end;">
+          <button id="btn-xpath">查询</button>
+        </div>
+      </div>
+      <div id="xpath-result" class="table"></div>
+    </div>
+
   </div>
 
   <div id="book-modal" class="modal">
@@ -112,7 +127,7 @@
         <div class="form-column">
           <label>分类</label><input id="form-category">
           <label>价格</label><input id="form-price" type="number" step="0.1">
-          <label>年份</label><input id="form-year" type="number">
+          <label>出版年</label><input id="form-year" type="number">
           <label>库存</label><input id="form-stock" type="number">
         </div>
       </div>
