@@ -46,7 +46,8 @@
       <h3>分页浏览 + CRUD（AJAX + JSON）</h3>
       <div class="paged-layout">
         <div class="paged-list">
-          <div class="flex">
+          <div class="paged-header">
+            <div class="flex paged-controls">
             <div class="control-field">
               <label>每页条目</label>
               <input id="page-size" type="number" value="5" min="1" max="20">
@@ -67,6 +68,8 @@
                 <option value="desc">降序</option>
               </select>
             </div>
+            </div>
+            <button type="button" class="success" id="btn-add">新增图书</button>
           </div>
           <div class="inline-controls pager-controls">
             <button id="btn-prev">上一页</button>
@@ -75,8 +78,11 @@
           </div>
           <div id="paged-table" class="table"></div>
         </div>
-        <div class="crud-card">
-          <h4>添加 / 更新 / 删除</h4>
+        <div class="crud-card" id="crud-card">
+          <div class="crud-card-header">
+            <h4 id="crud-card-title">操作表单</h4>
+            <span id="crud-card-hint" class="crud-hint">点击“新增图书”或某一行的“更新”按钮后再填写</span>
+          </div>
           <div class="flex form-grid">
             <div class="form-column">
               <label>书号</label><input id="form-id" placeholder="如 BK-0001">
@@ -91,9 +97,8 @@
             </div>
           </div>
           <div class="inline-controls form-actions">
-            <button class="success" id="btn-add">添加</button>
-            <button id="btn-update">更新</button>
-            <button class="danger" id="btn-delete">删除</button>
+            <button class="primary" type="button" id="btn-save" disabled>保存</button>
+            <button class="ghost" type="button" id="btn-cancel">取消</button>
             <span id="form-status" class="status"></span>
           </div>
         </div>

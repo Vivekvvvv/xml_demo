@@ -3,6 +3,86 @@ const AUTH_TOKEN_KEY = 'authToken';
 const DISPLAY_NAME_KEY = 'displayName';
 let currentPage = 1;
 let totalPages = 1;
+let formMode = null;
+
+const FORM_FIELDS = {
+  id: 'form-id',
+  title: 'form-title',
+  author: 'form-author',
+  category: 'form-category',
+  price: 'form-price',
+  publishYear: 'form-year',
+  stock: 'form-stock',
+};
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function clearFormFields() {
+  Object.values(FORM_FIELDS).forEach((fieldId) => {
+    const node = qs(fieldId);
+    if (node) node.value = '';
+  });
+}
+
+function fillFormFields(book = {}) {
+  Object.entries(FORM_FIELDS).forEach(([key, fieldId]) => {
+    const node = qs(fieldId);
+    if (node) node.value = book[key] ?? '';
+  });
+}
+
+function focusFirstField() {
+  const node = qs(FORM_FIELDS.id);
+  if (node) node.focus();
+}
+
+function setFormMode(mode, book = null) {
+  formMode = mode;
+  const titleEl = qs('crud-card-title');
+  const hintEl = qs('crud-card-hint');
+  const saveBtn = qs('btn-save');
+  if (!saveBtn) return;
+  let titleText = '操作表单';
+  let hintText = '点击“新增图书”或某一行的“更新”按钮后再填写';
+  let saveText = '保存';
+  let enableSave = false;
+
+  if (mode === 'create') {
+    clearFormFields();
+    titleText = '新增图书';
+    hintText = '填写完表单后点击“保存新增”';
+    saveText = '保存新增';
+    enableSave = true;
+    focusFirstField();
+  } else if (mode === 'update' && book) {
+    fillFormFields(book);
+    titleText = `更新：${book.title || book.id || ''}`;
+    hintText = '修改内容后点击“保存修改”';
+    saveText = '保存修改';
+    enableSave = true;
+    focusFirstField();
+  } else {
+    clearFormFields();
+  }
+
+  saveBtn.textContent = saveText;
+  saveBtn.disabled = !enableSave;
+  if (titleEl) titleEl.textContent = titleText;
+  if (hintEl) hintEl.textContent = hintText;
+  if (mode) {
+    const card = qs('crud-card');
+    if (card) {
+      card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+}
 
 function getToken() {
   return localStorage.getItem(AUTH_TOKEN_KEY);
@@ -83,13 +163,33 @@ async function loadPaged(page = 1) {
   const hasRows = Array.isArray(data.items) && data.items.length > 0;
   const rows = hasRows
     ? data.items
-        .map(
-          (b) =>
-            `<tr><td>${b.id}</td><td>${b.title}</td><td>${b.author}</td><td>${b.category}</td><td>${b.price}</td><td>${b.publishYear}</td><td>${b.stock}</td></tr>`,
-        )
+        .map((b) => {
+          const attrs = [
+            `data-id="${escapeHtml(b.id ?? '')}"`,
+            `data-title="${escapeHtml(b.title ?? '')}"`,
+            `data-author="${escapeHtml(b.author ?? '')}"`,
+            `data-category="${escapeHtml(b.category ?? '')}"`,
+            `data-price="${escapeHtml(b.price ?? '')}"`,
+            `data-year="${escapeHtml(b.publishYear ?? '')}"`,
+            `data-stock="${escapeHtml(b.stock ?? '')}"`,
+          ].join(' ');
+          return `<tr ${attrs}>
+            <td>${escapeHtml(b.id ?? '')}</td>
+            <td>${escapeHtml(b.title ?? '')}</td>
+            <td>${escapeHtml(b.author ?? '')}</td>
+            <td>${escapeHtml(b.category ?? '')}</td>
+            <td>${escapeHtml(b.price ?? '')}</td>
+            <td>${escapeHtml(b.publishYear ?? '')}</td>
+            <td>${escapeHtml(b.stock ?? '')}</td>
+            <td class="row-actions">
+              <button type="button" class="ghost btn-row-update" data-action="update">更新</button>
+              <button type="button" class="ghost danger btn-row-delete" data-action="delete">删除</button>
+            </td>
+          </tr>`;
+        })
         .join('')
-    : '<tr><td class="empty-row" colspan="7">暂无数据</td></tr>';
-  qs('paged-table').innerHTML = `<table class="table"><thead><tr><th>书号</th><th>书名</th><th>作者</th><th>分类</th><th>价格</th><th>年份</th><th>库存</th></tr></thead><tbody>${rows}</tbody></table>`;
+    : '<tr><td class="empty-row" colspan="8">暂无数据</td></tr>';
+  qs('paged-table').innerHTML = `<table class="table"><thead><tr><th>书号</th><th>书名</th><th>作者</th><th>分类</th><th>价格</th><th>年份</th><th>库存</th><th>操作</th></tr></thead><tbody>${rows}</tbody></table>`;
   return null;
 }
 
@@ -102,6 +202,19 @@ function readForm() {
     price: qs('form-price').value,
     publishYear: qs('form-year').value,
     stock: qs('form-stock').value,
+  };
+}
+
+function getBookFromRow(row) {
+  if (!row || !row.dataset) return null;
+  return {
+    id: row.dataset.id || '',
+    title: row.dataset.title || '',
+    author: row.dataset.author || '',
+    category: row.dataset.category || '',
+    price: row.dataset.price || '',
+    publishYear: row.dataset.year || '',
+    stock: row.dataset.stock || '',
   };
 }
 
@@ -122,6 +235,10 @@ async function handleAdd() {
     if (!resp.ok) throw new Error(await resp.text());
     setStatus('添加成功', true);
     await Promise.all([loadXsltTable(), loadPaged(currentPage)]);
+    if (formMode === 'create') {
+      clearFormFields();
+      focusFirstField();
+    }
   } catch (err) {
     setStatus(err.message);
   }
@@ -144,9 +261,12 @@ async function handleUpdate() {
   }
 }
 
-async function handleDelete() {
+async function handleDelete(idOverride) {
   try {
-    const id = qs('form-id').value.trim();
+    const id =
+      typeof idOverride === 'string' && idOverride
+        ? idOverride
+        : qs('form-id').value.trim();
     if (!id) throw new Error('请输入要删除的书号');
     const resp = await apiFetch(`/api/books/${encodeURIComponent(id)}`, { method: 'DELETE' });
     if (!resp.ok) throw new Error(await resp.text());
@@ -155,6 +275,45 @@ async function handleDelete() {
   } catch (err) {
     setStatus(err.message);
   }
+}
+
+function handlePagedTableClick(event) {
+  const button = event.target.closest('button[data-action]');
+  if (!button) return;
+  const row = button.closest('tr');
+  if (!row) return;
+  const action = button.dataset.action;
+  if (action === 'update') {
+    const book = getBookFromRow(row);
+    if (book) {
+      setStatus('');
+      setFormMode('update', book);
+    }
+  } else if (action === 'delete') {
+    const id = row.dataset.id;
+    if (!id) {
+      setStatus('无法获取要删除的书号');
+      return;
+    }
+    const name = row.dataset.title || id;
+    if (!window.confirm(`确认删除《${name}》吗？`)) return;
+    handleDelete(id);
+  }
+}
+
+async function handleFormSave() {
+  if (formMode === 'create') {
+    await handleAdd();
+  } else if (formMode === 'update') {
+    await handleUpdate();
+  } else {
+    setStatus('请先选择新增或更新操作');
+  }
+}
+
+function handleCancelForm() {
+  setStatus('');
+  setFormMode(null);
 }
 
 async function handleXPath() {
@@ -205,9 +364,19 @@ function bindEvents() {
     if (currentPage >= totalPages) return;
     loadPaged(currentPage + 1);
   });
-  qs('btn-add').addEventListener('click', handleAdd);
-  qs('btn-update').addEventListener('click', handleUpdate);
-  qs('btn-delete').addEventListener('click', handleDelete);
+  const addBtn = qs('btn-add');
+  if (addBtn) {
+    addBtn.addEventListener('click', () => {
+      setStatus('');
+      setFormMode('create');
+    });
+  }
+  const saveBtn = qs('btn-save');
+  if (saveBtn) saveBtn.addEventListener('click', handleFormSave);
+  const cancelBtn = qs('btn-cancel');
+  if (cancelBtn) cancelBtn.addEventListener('click', handleCancelForm);
+  const tableContainer = qs('paged-table');
+  if (tableContainer) tableContainer.addEventListener('click', handlePagedTableClick);
   qs('btn-xpath').addEventListener('click', handleXPath);
   qs('page-size').addEventListener('change', () => {
     currentPage = 1;
@@ -227,6 +396,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     await ensureSession();
     bindEvents();
+    setFormMode(null);
     await loadXsltTable();
     await loadPaged(1);
     await handleXPath();
