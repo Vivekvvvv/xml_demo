@@ -1,0 +1,19 @@
+{
+  "name": "xml-demo",
+  "version": "1.0.0",
+  "description": "基于 XML 存储的三层架构 Web 小型应用（社区书屋借阅管理示例）",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@xmldom/xmldom": "^0.8.11",
+    "express": "^4.18.2",
+    "fast-xml-parser": "^4.3.6",
+    "uuid": "^9.0.0",
+    "xpath": "^0.0.34"
+  }
+}

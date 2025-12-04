@@ -1,0 +1,58 @@
+<library>
+  <book id="B001">
+    <title>XML快速上手</title>
+    <author>王立</author>
+    <category>技术</category>
+    <price>39.8</price>
+    <publishYear>2021</publishYear>
+    <stock>8</stock>
+  </book>
+  <book id="B002">
+    <title>Node.js实战</title>
+    <author>李斯</author>
+    <category>后端</category>
+    <price>68</price>
+    <publishYear>2022</publishYear>
+    <stock>5</stock>
+  </book>
+  <book id="B003">
+    <title>前端架构设计</title>
+    <author>赵楠</author>
+    <category>前端</category>
+    <price>79</price>
+    <publishYear>2020</publishYear>
+    <stock>3</stock>
+  </book>
+  <book id="B004">
+    <title>数据库索引原理</title>
+    <author>刘洋</author>
+    <category>数据库</category>
+    <price>55</price>
+    <publishYear>2019</publishYear>
+    <stock>6</stock>
+  </book>
+  <book id="B005">
+    <title>算法图解</title>
+    <author>Aditya Bhargava</author>
+    <category>算法</category>
+    <price>65</price>
+    <publishYear>2018</publishYear>
+    <stock>4</stock>
+  </book>
+  <book id="B006">
+    <title>社区运营101</title>
+    <author>陈敏</author>
+    <category>管理</category>
+    <price>42</price>
+    <publishYear>2023</publishYear>
+    <stock>9</stock>
+  </book>
+  <book id="BK-0001">
+    <title>JAVA从入门到入土</title>
+    <author>余麻子</author>
+    <category>计算机编程</category>
+    <price>10</price>
+    <publishYear>2024</publishYear>
+    <stock>10</stock>
+  </book>
+</library>

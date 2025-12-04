@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登录 - 社区书店 XML Demo</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="login.css">
+</head>
+<body class="login-body">
+  <div class="login-shell">
+    <div class="login-card">
+      <div class="login-title">
+        <span class="login-badge">XML Demo</span>
+        <span>登录</span>
+      </div>
+      <p class="login-subtitle">输入账号密码后进入书店管理界面。默认账号：<code>admin / admin123</code>，或 <code>guest / guest</code>。</p>
+      <form id="login-form">
+        <label for="username">账号</label>
+        <input id="username" name="username" placeholder="admin" autocomplete="username" required>
+
+        <label for="password">密码</label>
+        <input id="password" name="password" type="password" placeholder="••••••" autocomplete="current-password" required>
+
+        <div class="login-actions">
+          <button type="submit">进入系统</button>
+          <span id="login-status" class="login-status"></span>
+        </div>
+      </form>
+    </div>
+    <p class="login-meta">基于 XML/XSD/XSLT 的社区小书店示例</p>
+  </div>
+
+  <script src="login.js"></script>
+</body>
+</html>
